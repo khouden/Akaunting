@@ -74,9 +74,13 @@ class Categories extends ApiController
      */
     public function enable(Category $category)
     {
-        $category = $this->dispatch(new UpdateCategory($category, request()->merge(['enabled' => 1])));
+        try {
+            $category = $this->dispatch(new UpdateCategory($category, request()->merge(['enabled' => 1])));
 
-        return new Resource($category->fresh());
+            return new Resource($category->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

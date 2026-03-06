@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Route;
  * @see \App\Providers\Route::mapApiRoutes
  */
 
+// Protected auth routes (require Sanctum token)
+Route::group(['as' => 'api.', 'middleware' => ['auth:sanctum'], 'namespace' => 'Auth'], function () {
+    Route::post('logout', 'Login@logout')->name('logout');
+    Route::get('profile', 'Login@profile')->name('profile');
+});
+
 Route::group(['as' => 'api.'], function () {
     // Ping
     Route::get('ping', 'Common\Ping@pong')->name('ping');
@@ -58,7 +64,7 @@ Route::group(['as' => 'api.'], function () {
     Route::apiResource('transfers', 'Banking\Transfers', ['middleware' => ['date.format', 'money', 'dropzone']]);
 
     // Reports
-    Route::resource('reports', 'Common\Reports');
+    Route::apiResource('reports', 'Common\Reports');
 
     // Categories
     Route::get('categories/{category}/enable', 'Settings\Categories@enable')->name('categories.enable');

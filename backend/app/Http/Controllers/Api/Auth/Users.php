@@ -71,11 +71,15 @@ class Users extends ApiController
      */
     public function update($user_id, Request $request)
     {
-        $user = user_model_class()::query()->isNotCustomer()->find($user_id);
+        try {
+            $user = user_model_class()::query()->isNotCustomer()->find($user_id);
 
-        $user = $this->dispatch(new UpdateUser($user, $request));
+            $user = $this->dispatch(new UpdateUser($user, $request));
 
-        return new Resource($user->fresh());
+            return new Resource($user->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**
@@ -87,11 +91,15 @@ class Users extends ApiController
      */
     public function enable($user_id)
     {
-        $user = user_model_class()::query()->isNotCustomer()->find($user_id);
+        try {
+            $user = user_model_class()::query()->isNotCustomer()->find($user_id);
 
-        $user = $this->dispatch(new UpdateUser($user, request()->merge(['enabled' => 1])));
+            $user = $this->dispatch(new UpdateUser($user, request()->merge(['enabled' => 1])));
 
-        return new Resource($user->fresh());
+            return new Resource($user->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**
@@ -103,11 +111,15 @@ class Users extends ApiController
      */
     public function disable($user_id)
     {
-        $user = user_model_class()::query()->isNotCustomer()->find($user_id);
+        try {
+            $user = user_model_class()::query()->isNotCustomer()->find($user_id);
 
-        $user = $this->dispatch(new UpdateUser($user, request()->merge(['enabled' => 0])));
+            $user = $this->dispatch(new UpdateUser($user, request()->merge(['enabled' => 0])));
 
-        return new Resource($user->fresh());
+            return new Resource($user->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

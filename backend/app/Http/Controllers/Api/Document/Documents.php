@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Document;
 use App\Abstracts\Http\ApiController;
 use App\Http\Requests\Document\Document as Request;
 use App\Http\Resources\Document\Document as Resource;
+use App\Events\Document\DocumentReceived;
 use App\Jobs\Document\CreateDocument;
 use App\Jobs\Document\DeleteDocument;
 use App\Jobs\Document\UpdateDocument;
@@ -97,6 +98,24 @@ class Documents extends ApiController
         $document = $this->dispatch(new UpdateDocument($document, $request));
 
         return new Resource($document->fresh());
+    }
+
+    /**
+     * Mark the document as received.
+     *
+     * @param  Document  $document
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function received(Document $document)
+    {
+        try {
+            event(new DocumentReceived($document));
+
+            return new Resource($document->fresh());
+        } catch (\Exception $e) {
+            $this->errorInternal($e->getMessage());
+        }
     }
 
     /**

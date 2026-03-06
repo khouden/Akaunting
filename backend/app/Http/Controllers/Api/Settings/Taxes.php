@@ -74,9 +74,13 @@ class Taxes extends ApiController
      */
     public function enable(Tax $tax)
     {
-        $tax = $this->dispatch(new UpdateTax($tax, request()->merge(['enabled' => 1])));
+        try {
+            $tax = $this->dispatch(new UpdateTax($tax, request()->merge(['enabled' => 1])));
 
-        return new Resource($tax->fresh());
+            return new Resource($tax->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

@@ -76,9 +76,13 @@ class Items extends ApiController
      */
     public function enable(Item $item)
     {
-        $item = $this->dispatch(new UpdateItem($item, request()->merge(['enabled' => 1])));
+        try {
+            $item = $this->dispatch(new UpdateItem($item, request()->merge(['enabled' => 1])));
 
-        return new Resource($item->fresh());
+            return new Resource($item->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**
@@ -89,9 +93,13 @@ class Items extends ApiController
      */
     public function disable(Item $item)
     {
-        $item = $this->dispatch(new UpdateItem($item, request()->merge(['enabled' => 0])));
+        try {
+            $item = $this->dispatch(new UpdateItem($item, request()->merge(['enabled' => 0])));
 
-        return new Resource($item->fresh());
+            return new Resource($item->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

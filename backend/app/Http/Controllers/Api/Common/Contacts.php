@@ -85,9 +85,13 @@ class Contacts extends ApiController
      */
     public function enable(Contact $contact)
     {
-        $contact = $this->dispatch(new UpdateContact($contact, request()->merge(['enabled' => 1])));
+        try {
+            $contact = $this->dispatch(new UpdateContact($contact, request()->merge(['enabled' => 1])));
 
-        return new Resource($contact->fresh());
+            return new Resource($contact->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

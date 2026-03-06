@@ -65,9 +65,13 @@ class Settings extends ApiController
      */
     public function store(Request $request)
     {
-        $setting = Setting::create($request->all());
+        try {
+            $setting = Setting::create($request->all());
 
-        return $this->created(route('api.settings.show', $setting->id), new Resource($setting));
+            return $this->created(route('api.settings.show', $setting->id), new Resource($setting));
+        } catch (\Exception $e) {
+            $this->errorInternal($e->getMessage());
+        }
     }
 
     /**
@@ -79,9 +83,13 @@ class Settings extends ApiController
      */
     public function update(Setting $setting, Request $request)
     {
-        $setting->update($request->all());
+        try {
+            $setting->update($request->all());
 
-        return new Resource($setting->fresh());
+            return new Resource($setting->fresh());
+        } catch (\Exception $e) {
+            $this->errorInternal($e->getMessage());
+        }
     }
 
     /**
@@ -92,8 +100,12 @@ class Settings extends ApiController
      */
     public function destroy(Setting $setting)
     {
-        $setting->delete();
+        try {
+            $setting->delete();
 
-        return $this->noContent();
+            return $this->noContent();
+        } catch (\Exception $e) {
+            $this->errorInternal($e->getMessage());
+        }
     }
 }

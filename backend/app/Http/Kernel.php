@@ -48,7 +48,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'auth.basic.once',
+            'api.auth',
             'auth.disabled',
             'throttle:api',
             'permission:read-api',
@@ -168,6 +168,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
         // Akaunting
+        'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
         'api.key' => \App\Http\Middleware\RedirectIfNoApiKey::class,
         'auth.basic.once' => \App\Http\Middleware\AuthenticateOnceWithBasicAuth::class,
         'auth.disabled' => \App\Http\Middleware\LogoutIfUserDisabled::class,

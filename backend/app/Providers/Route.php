@@ -124,6 +124,8 @@ class Route extends Provider
 
         $this->mapInstallRoutes();
 
+        $this->mapPublicApiRoutes();
+
         $this->mapApiRoutes();
 
         $this->mapCommonRoutes();
@@ -156,6 +158,17 @@ class Route extends Provider
             ->middleware('install')
             ->namespace($this->namespace)
             ->group(base_path('routes/install.php'));
+    }
+
+    /**
+     * Define the public "api" routes (no auth required).
+     */
+    protected function mapPublicApiRoutes()
+    {
+        Facade::prefix(config('api.prefix'))
+            ->middleware(['throttle:api'])
+            ->namespace($this->namespace . '\Api')
+            ->group(base_path('routes/api-public.php'));
     }
 
     /**

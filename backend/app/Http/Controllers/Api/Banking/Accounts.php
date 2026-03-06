@@ -85,9 +85,13 @@ class Accounts extends ApiController
      */
     public function enable(Account $account)
     {
-        $account = $this->dispatch(new UpdateAccount($account, request()->merge(['enabled' => 1])));
+        try {
+            $account = $this->dispatch(new UpdateAccount($account, request()->merge(['enabled' => 1])));
 
-        return new Resource($account->fresh());
+            return new Resource($account->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**

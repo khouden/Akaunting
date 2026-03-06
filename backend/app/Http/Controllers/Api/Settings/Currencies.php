@@ -85,9 +85,13 @@ class Currencies extends ApiController
      */
     public function enable(Currency $currency)
     {
-        $currency = $this->dispatch(new UpdateCurrency($currency, request()->merge(['enabled' => 1])));
+        try {
+            $currency = $this->dispatch(new UpdateCurrency($currency, request()->merge(['enabled' => 1])));
 
-        return new Resource($currency->fresh());
+            return new Resource($currency->fresh());
+        } catch (\Exception $e) {
+            $this->errorUnauthorized($e->getMessage());
+        }
     }
 
     /**
