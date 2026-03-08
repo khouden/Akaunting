@@ -1,13 +1,31 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/auth/data/repositories/dev_auth_repository.dart';
+import '../../data/repositories/auth_repository.dart' as api;
+import '../../logic/cubits/auth_cubit.dart';
+import '../network/api_client.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // Authentication
-  sl.registerLazySingleton<AuthRepository>(() => DevAuthRepository());
-  
-  // Future: Switch to ApiAuthRepository when Developer 1 finishes Auth module
-  // sl.registerLazySingleton<AuthRepository>(() => ApiAuthRepository(apiClient: sl()));
+  // ── Infrastructure ────────────────────────────────────────────────────────
+  sl.registerLazySingleton<FlutterSecureStorage>(
+    () => const FlutterSecureStorage(),
+  );
+
+  sl.registerLazySingleton<ApiClient>(
+    () => ApiClient(baseUrl: 'http://10.0.2.2:8000'),
+  );
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<AuthRepository>(
+    () => api.ApiAuthRepository(
+      dio: sl<ApiClient>().dio,
+      storage: sl<FlutterSecureStorage>(),
+    ),
+  );
+
+  sl.registerLazySingleton<AuthCubit>(
+    () => AuthCubit(authRepository: sl<AuthRepository>()),
+  );
 }
