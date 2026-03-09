@@ -1,15 +1,2 @@
-import 'package:flutter/material.dart';
-
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: const Center(
-        child: Text('Login Screen (Under Construction by Dev 1)'),
-      ),
-    );
-  }
-}
+// Re-export from the canonical location so existing imports keep working.
+export '../../../../presentation/screens/login_screen.dart';

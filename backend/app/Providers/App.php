@@ -16,6 +16,10 @@ class App extends Provider
      */
     public function register()
     {
+        if (!class_exists(\Database\Seeders\DatabaseSeeder::class)) {
+            class_alias(\Database\Seeds\DatabaseSeeder::class, 'Database\\Seeders\\DatabaseSeeder');
+        }
+
         if (config('app.installed') && config('app.debug')) {
             $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
         }
