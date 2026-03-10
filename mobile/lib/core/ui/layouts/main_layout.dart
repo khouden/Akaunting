@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../features/banking/accounts/presentation/pages/accounts_page.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -13,7 +12,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _pages = [
     const Center(child: Text('Dashboard Placeholder')),
-    const AccountsPage(),
+    const Center(child: Text('Banking Placeholder')),
     const Center(child: Text('Settings Placeholder')),
   ];
 
