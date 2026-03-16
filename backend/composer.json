@@ -131,16 +131,22 @@
         }
     },
     "scripts": {
+        "prepare-directories": [
+            "@php -r \"foreach (['bootstrap/cache', 'storage', 'storage/framework', 'storage/framework/cache', 'storage/framework/cache/data', 'storage/framework/sessions', 'storage/framework/views', 'storage/logs'] as $dir) { if (!is_dir($dir)) { mkdir($dir, 0777, true); } }\""
+        ],
         "post-autoload-dump": [
+            "@prepare-directories",
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],
         "post-install-cmd": [
+            "@prepare-directories",
             "php artisan ide-helper:generate",
             "php artisan ide-helper:meta",
             "php artisan ide-helper:models --nowrite"
         ],
         "post-update-cmd": [
+            "@prepare-directories",
             "php artisan ide-helper:generate",
             "php artisan ide-helper:meta",
             "php artisan ide-helper:models --nowrite"
