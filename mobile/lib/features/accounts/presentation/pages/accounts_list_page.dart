@@ -70,7 +70,6 @@ class _AccountsListViewState extends State<AccountsListView> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: AkauntingSearch(
               placeholder: 'Search accounts...',
-              initialValue: _searchQuery.isNotEmpty ? _searchQuery : null,
               onSearch: _onSearch,
               onClear: () => _onSearch(''),
             ),
