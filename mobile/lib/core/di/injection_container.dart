@@ -7,6 +7,11 @@ import '../../logic/cubits/auth_cubit.dart';
 import '../../features/accounts/domain/repositories/account_repository.dart';
 import '../../features/accounts/data/repositories/account_repository.dart';
 import '../../logic/cubits/account_cubit.dart';
+import '../../features/reconciliations/domain/repositories/reconciliation_repository.dart';
+import '../../features/reconciliations/data/repositories/reconciliation_repository.dart';
+import '../../logic/cubits/reconciliation_cubit.dart';
+import '../../domain/repositories/transaction_repository.dart';
+import '../../features/transactions/presentation/cubit/transaction_cubit.dart';
 import '../network/api_client.dart';
 import '../network/auth_interceptor.dart';
 
@@ -50,4 +55,21 @@ Future<void> init() async {
     () => AccountCubit(accountRepository: sl<AccountRepository>()),
   );
 
+  // Reconciliations
+  sl.registerLazySingleton<ReconciliationRepository>(
+    () => ApiReconciliationRepository(dio: sl<ApiClient>().dio),
+  );
+
+  sl.registerFactory<ReconciliationCubit>(
+    () => ReconciliationCubit(reconciliationRepository: sl<ReconciliationRepository>()),
+  );
+
+  // Transactions
+  sl.registerLazySingleton<TransactionRepository>(
+    () => TransactionRepository(),
+  );
+
+  sl.registerFactory<TransactionCubit>(
+    () => TransactionCubit(),
+  );
 }

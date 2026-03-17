@@ -43,6 +43,7 @@ class _AccountFormViewState extends State<_AccountFormView> {
   late String _currencyCode;
   String? _openingBalance;
   late bool _enabled;
+  bool _defaultAccount = false;
   late TextEditingController _bankNameController;
   late TextEditingController _bankPhoneController;
   late TextEditingController _bankAddressController;
@@ -89,6 +90,7 @@ class _AccountFormViewState extends State<_AccountFormView> {
       'currency_code': _currencyCode,
       'opening_balance': _openingBalance,
       'enabled': _enabled ? 1 : 0,
+      'default_account': _defaultAccount ? 1 : 0,
     };
 
     if (_bankNameController.text.isNotEmpty) data['bank_name'] = _bankNameController.text.trim();
@@ -181,6 +183,14 @@ class _AccountFormViewState extends State<_AccountFormView> {
                           value: _openingBalance,
                           onChanged: (val) => _openingBalance = val,
                         ),
+                        if (_type == 1) ...[
+                          const SizedBox(height: 16),
+                          AkauntingSwitch(
+                            label: 'Default Account',
+                            value: _defaultAccount,
+                            onChanged: (val) => setState(() => _defaultAccount = val),
+                          )
+                        ],
                         if (widget.account != null) ...[
                           const SizedBox(height: 16),
                           AkauntingSwitch(

@@ -5,41 +5,41 @@ import '../../../../core/ui/components/akaunting_search.dart';
 import '../../../../core/ui/components/badge.dart';
 import '../../../../core/ui/components/cards/card.dart';
 import '../../../../core/ui/components/base_alert.dart';
-import '../../../../logic/cubits/account_cubit.dart';
-import 'account_detail_page.dart';
-import 'account_form_page.dart';
+import '../../../../logic/cubits/reconciliation_cubit.dart';
+import 'reconciliation_detail_page.dart';
+import 'reconciliation_form_page.dart';
 
-class AccountsListPage extends StatelessWidget {
-  const AccountsListPage({super.key});
+class ReconciliationsListPage extends StatelessWidget {
+  const ReconciliationsListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AccountCubit>(
-      create: (context) => sl<AccountCubit>()..loadAccounts(),
-      child: const AccountsListView(),
+    return BlocProvider<ReconciliationCubit>(
+      create: (context) => sl<ReconciliationCubit>()..loadReconciliations(),
+      child: const ReconciliationsListView(),
     );
   }
 }
 
-class AccountsListView extends StatefulWidget {
-  const AccountsListView({super.key});
+class ReconciliationsListView extends StatefulWidget {
+  const ReconciliationsListView({super.key});
 
   @override
-  State<AccountsListView> createState() => _AccountsListViewState();
+  State<ReconciliationsListView> createState() => _ReconciliationsListViewState();
 }
 
-class _AccountsListViewState extends State<AccountsListView> {
+class _ReconciliationsListViewState extends State<ReconciliationsListView> {
   String _searchQuery = '';
 
   Future<void> _onRefresh() async {
-    context.read<AccountCubit>().loadAccounts(search: _searchQuery);
+    context.read<ReconciliationCubit>().loadReconciliations(search: _searchQuery);
   }
 
   void _onSearch(String value) {
     setState(() {
       _searchQuery = value;
     });
-    context.read<AccountCubit>().loadAccounts(search: value);
+    context.read<ReconciliationCubit>().loadReconciliations(search: value);
   }
 
   @override
@@ -47,17 +47,18 @@ class _AccountsListViewState extends State<AccountsListView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),
       appBar: AppBar(
-        title: const Text('Accounts', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text('Reconciliations', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'accounts_fab',
+        heroTag: 'reconciliations_fab',
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => const AccountFormPage(),
+              builder: (_) => const ReconciliationFormPage(),
             ),
           ).then((_) => _onRefresh());
         },
@@ -70,17 +71,17 @@ class _AccountsListViewState extends State<AccountsListView> {
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: AkauntingSearch(
-              placeholder: 'Search accounts...',
+              placeholder: 'Search reconciliations...',
               onSearch: _onSearch,
               onClear: () => _onSearch(''),
             ),
           ),
           Expanded(
-            child: BlocBuilder<AccountCubit, AccountState>(
+            child: BlocBuilder<ReconciliationCubit, ReconciliationState>(
               builder: (context, state) {
-                if (state is AccountLoading) {
+                if (state is ReconciliationLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (state is AccountError) {
+                } else if (state is ReconciliationError) {
                   return Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: BaseAlert(
@@ -89,17 +90,20 @@ class _AccountsListViewState extends State<AccountsListView> {
                       icon: Icons.error_outline,
                     ),
                   );
-                } else if (state is AccountsLoaded) {
-                  if (state.accounts.isEmpty) {
-                    return const Center(child: Text('No accounts found.'));
+                } else if (state is ReconciliationsLoaded) {
+                  if (state.reconciliations.isEmpty) {
+                    return const Center(child: Text('No reconciliations found.'));
                   }
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: state.accounts.length,
+                      itemCount: state.reconciliations.length,
                       itemBuilder: (context, index) {
-                        final account = state.accounts[index];
+                        final rec = state.reconciliations[index];
+                        final startDate = rec.startedAt.split('T').first;
+                        final endDate = rec.endedAt.split('T').first;
+                        
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
                           child: AppCard(
@@ -108,7 +112,7 @@ class _AccountsListViewState extends State<AccountsListView> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => AccountDetailPage(account: account),
+                                    builder: (_) => ReconciliationDetailPage(reconciliation: rec),
                                   ),
                                 ).then((_) => _onRefresh());
                               },
@@ -122,25 +126,23 @@ class _AccountsListViewState extends State<AccountsListView> {
                                         Row(
                                           children: [
                                             Text(
-                                              account.name,
+                                              rec.account?.name ?? 'Account #${rec.accountId}',
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.black87,
                                               ),
                                             ),
-                                            if (!account.enabled) ...[
-                                              const SizedBox(width: 8),
-                                              const AppBadge(
-                                                type: BadgeType.danger,
-                                                child: Text('Disabled'),
-                                              ),
-                                            ]
+                                            const SizedBox(width: 8),
+                                            AppBadge(
+                                              type: rec.reconciled ? BadgeType.success : BadgeType.warning,
+                                              child: Text(rec.reconciled ? 'Reconciled' : 'Unreconciled'),
+                                            ),
                                           ],
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '${account.number} ${account.bankName != null ? '• ${account.bankName}' : ''}',
+                                          '$startDate - $endDate',
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: Colors.grey.shade600,
@@ -150,8 +152,8 @@ class _AccountsListViewState extends State<AccountsListView> {
                                     ),
                                   ),
                                   Text(
-                                    account.currentBalanceFormatted ?? 
-                                        '\$${account.currentBalance?.toStringAsFixed(2) ?? "0.00"}',
+                                    rec.closingBalanceFormatted ?? 
+                                        '\$${rec.closingBalance.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
