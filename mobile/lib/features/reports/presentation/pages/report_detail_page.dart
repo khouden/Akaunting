@@ -5,6 +5,9 @@ import 'package:get_it/get_it.dart';
 import '../cubit/report_cubit.dart';
 import '../cubit/report_state.dart';
 
+import './components/report_charts_widget.dart';
+import './components/report_table_widget.dart';
+
 class ReportDetailPage extends StatefulWidget {
   final int reportId;
   final String reportName;
@@ -82,24 +85,9 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
                   ),
                   const SizedBox(height: 16),
                   if (report.data != null && report.data!.isNotEmpty) ...[
-                    Text(
-                      'Report Data',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Text(
-                        const JsonEncoder.withIndent('  ').convert(report.data),
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                      ),
-                    ),
+                    ReportChartsWidget(data: report.data!),
+                    const SizedBox(height: 16),
+                    ReportTableWidget(data: report.data!),
                   ] else ...[
                     Container(
                       padding: const EdgeInsets.all(32),

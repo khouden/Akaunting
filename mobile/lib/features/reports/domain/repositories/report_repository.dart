@@ -20,6 +20,10 @@ class ReportRepository {
     
     if (response.data is Map<String, dynamic>) {
       final Map<String, dynamic> data = response.data;
+      // If it has 'id', it's already unwrapped!
+      if (data.containsKey('id')) {
+        return ReportModel.fromJson(data);
+      }
       if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
         return ReportModel.fromJson(data['data']);
       }
@@ -34,6 +38,9 @@ class ReportRepository {
     
     if (response.data is Map<String, dynamic>) {
       final Map<String, dynamic> resData = response.data;
+      if (resData.containsKey('id')) {
+        return ReportModel.fromJson(resData);
+      }
       if (resData.containsKey('data') && resData['data'] is Map<String, dynamic>) {
         return ReportModel.fromJson(resData['data']);
       }
@@ -48,6 +55,9 @@ class ReportRepository {
     
     if (response.data is Map<String, dynamic>) {
       final Map<String, dynamic> resData = response.data;
+      if (resData.containsKey('id')) {
+        return ReportModel.fromJson(resData);
+      }
       if (resData.containsKey('data') && resData['data'] is Map<String, dynamic>) {
         return ReportModel.fromJson(resData['data']);
       }

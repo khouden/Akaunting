@@ -42,8 +42,11 @@ class ReportModel {
       }
 
       Map<String, dynamic>? parseNullableMap(dynamic value) {
+        print('parseNullableMap received type: ${value.runtimeType}');
+        if (value == null) return null;
         if (value is Map<String, dynamic>) return value;
         if (value is Map) return Map<String, dynamic>.from(value);
+        print('parseNullableMap parsing failed, returning null for value: $value');
         return null;
       }
 
