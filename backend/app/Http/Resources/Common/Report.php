@@ -32,11 +32,7 @@ class Report extends JsonResource
 
     protected function getReportData()
     {
-        if (! Utility::canShow($this->class)) {
-            return [];
-        }
-
-        $report = Utility::getClassInstance($this);
+        $report = Utility::getClassInstance($this->resource);
 
         if (empty($report)) {
             return [];
