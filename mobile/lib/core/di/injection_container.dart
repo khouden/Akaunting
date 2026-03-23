@@ -12,6 +12,15 @@ import '../../features/reconciliations/data/repositories/reconciliation_reposito
 import '../../logic/cubits/reconciliation_cubit.dart';
 import '../../domain/repositories/transfer_repository.dart';
 import '../../domain/repositories/transaction_repository.dart';
+import '../../features/companies/domain/repositories/company_repository.dart';
+import '../../features/companies/data/repositories/company_repository_impl.dart';
+import '../../features/companies/presentation/cubit/company_cubit.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/presentation/cubit/profile_cubit.dart';
+import '../../features/dashboard/domain/repositories/dashboard_repository.dart';
+import '../../features/dashboard/data/repositories/dashboard_repository.dart';
+import '../../logic/cubits/dashboard_cubit.dart';
 import '../../features/transfers/presentation/cubit/transfer_cubit.dart';
 import '../../features/transactions/presentation/cubit/transaction_cubit.dart';
 import '../../features/reports/domain/repositories/report_repository.dart';
@@ -120,4 +129,28 @@ Future<void> init() async {
   // Translations (Dev 4)
   sl.registerLazySingleton<TranslationRepository>(() => TranslationRepository());
   sl.registerFactory<TranslationCubit>(() => TranslationCubit());
+
+  // Companies
+  sl.registerLazySingleton<CompanyRepository>(
+    () => CompanyRepositoryImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerFactory<CompanyCubit>(
+    () => CompanyCubit(repository: sl<CompanyRepository>()),
+  );
+
+  // Profile
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerFactory<ProfileCubit>(
+    () => ProfileCubit(repository: sl<ProfileRepository>()),
+  );
+
+  // Dashboard
+  sl.registerLazySingleton<DashboardRepository>(
+    () => ApiDashboardRepository(dio: sl<ApiClient>().dio),
+  );
+  sl.registerFactory<DashboardCubit>(
+    () => DashboardCubit(dashboardRepository: sl<DashboardRepository>()),
+  );
 }

@@ -4,6 +4,7 @@ import '../../../companies/presentation/cubit/company_cubit.dart';
 import '../../../companies/presentation/widgets/company_switcher.dart';
 import '../../../profile/presentation/cubit/profile_cubit.dart';
 import '../../../profile/presentation/cubit/profile_state.dart';
+import 'dashboards_list_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -60,13 +61,30 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 24),
 
               // Dashboard content placeholder
-              const Text(
-                'Overview',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Overview',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DashboardsListPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.settings, size: 16),
+                    label: const Text('Manage'),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 

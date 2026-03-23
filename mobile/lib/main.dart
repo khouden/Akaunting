@@ -4,6 +4,8 @@ import 'core/di/injection_container.dart' as di;
 import 'core/di/injection_container.dart';
 import 'features/auth/presentation/pages/auth_check_page.dart';
 import 'logic/cubits/auth_cubit.dart';
+import 'features/companies/presentation/cubit/company_cubit.dart';
+import 'features/profile/presentation/cubit/profile_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,8 +18,12 @@ class AkauntingMobileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthCubit>(
-      create: (_) => sl<AuthCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>(create: (_) => sl<AuthCubit>()),
+        BlocProvider<CompanyCubit>(create: (_) => sl<CompanyCubit>()),
+        BlocProvider<ProfileCubit>(create: (_) => sl<ProfileCubit>()),
+      ],
       child: MaterialApp(
         title: 'Akaunting Mobile',
         debugShowCheckedModeBanner: false,

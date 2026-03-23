@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../features/banking/presentation/pages/banking_hub_page.dart';
 import '../../../features/reports/presentation/pages/reports_list_page.dart';
 import '../../../features/settings_hub/presentation/pages/settings_hub_page.dart';
+import '../../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../components/app_drawer.dart';
 
 class MainLayout extends StatefulWidget {
@@ -16,7 +17,7 @@ class _MainLayoutState extends State<MainLayout> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _pages = [
-    const Center(child: Text('Dashboard Placeholder')),
+    const DashboardPage(),
     const BankingHubPage(),
     const ReportsListPage(),
     const SettingsHubPage(),
