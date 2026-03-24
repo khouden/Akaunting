@@ -29,10 +29,28 @@ class _MainLayoutState extends State<MainLayout> {
     const DocumentsListPage(),
   ];
 
+  static const _titles = ['Dashboard', 'Banking', 'Reports', 'Settings'];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Color(0xFF1F2937)),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(
+          _titles[_currentIndex],
+          style: const TextStyle(
+            color: Color(0xFF1F2937),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,

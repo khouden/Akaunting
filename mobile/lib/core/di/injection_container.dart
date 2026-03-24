@@ -44,6 +44,10 @@ import '../../features/settings/domain/repositories/setting_repository.dart';
 import '../../features/settings/presentation/cubit/setting_cubit.dart';
 import '../../features/translations/domain/repositories/translation_repository.dart';
 import '../../features/translations/presentation/cubit/translation_cubit.dart';
+import '../../features/users/domain/repositories/user_repository.dart';
+import '../../features/users/data/repositories/user_repository_impl.dart';
+import '../../features/users/presentation/cubit/user_cubit.dart';
+import '../../features/users/presentation/cubit/user_action_cubit.dart';
 import '../network/api_client.dart';
 import '../network/auth_interceptor.dart';
 
@@ -188,5 +192,16 @@ Future<void> init() async {
   );
   sl.registerFactory<DashboardCubit>(
     () => DashboardCubit(dashboardRepository: sl<DashboardRepository>()),
+  );
+
+  // Users
+  sl.registerLazySingleton<UserRepository>(
+    () => UserRepositoryImpl(dio: sl<ApiClient>().dio),
+  );
+  sl.registerFactory<UserCubit>(
+    () => UserCubit(repository: sl<UserRepository>()),
+  );
+  sl.registerFactory<UserActionCubit>(
+    () => UserActionCubit(repository: sl<UserRepository>()),
   );
 }
