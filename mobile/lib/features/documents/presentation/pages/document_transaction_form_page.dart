@@ -8,21 +8,21 @@ import '../../../../core/ui/components/akaunting_select.dart';
 import '../../../../core/ui/components/cards/card.dart';
 import '../../../../data/models/transaction_model.dart';
 import '../../../../domain/repositories/transaction_repository.dart';
-import '../cubit/transaction_cubit.dart';
-import '../cubit/transaction_state.dart';
+import '../../../../logic/cubits/document_transaction_cubit.dart';
 
-class TransactionFormPage extends StatefulWidget {
+class DocumentTransactionFormPage extends StatefulWidget {
+  final int documentId;
   final TransactionModel? transaction;
 
-  const TransactionFormPage({super.key, this.transaction});
+  const DocumentTransactionFormPage({super.key, required this.documentId, this.transaction});
 
   @override
-  State<TransactionFormPage> createState() => _TransactionFormPageState();
+  State<DocumentTransactionFormPage> createState() => _DocumentTransactionFormPageState();
 }
 
-class _TransactionFormPageState extends State<TransactionFormPage> {
+class _DocumentTransactionFormPageState extends State<DocumentTransactionFormPage> {
   final _formKey = GlobalKey<FormState>();
-  late TransactionCubit _cubit;
+  late DocumentTransactionCubit _cubit;
   late TransactionRepository _repository;
 
   final TextEditingController _amountController = TextEditingController();
@@ -31,7 +31,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   final TextEditingController _referenceController = TextEditingController();
   final TextEditingController _numberController = TextEditingController();
 
-  String _type = 'expense';
+  String _type = 'income';
   int? _accountId;
   int? _categoryId;
   int? _contactId;
@@ -46,7 +46,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   @override
   void initState() {
     super.initState();
-    _cubit = GetIt.I<TransactionCubit>();
+    _cubit = GetIt.I<DocumentTransactionCubit>();
     _repository = GetIt.I<TransactionRepository>();
 
     if (widget.transaction != null) {
@@ -141,23 +141,23 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F6F8),
         appBar: AppBar(
-          title: Text(widget.transaction == null ? 'New Transaction' : 'Edit Transaction', style: const TextStyle(color: Colors.black)),
+          title: Text(widget.transaction == null ? 'Add Transaction' : 'Edit Transaction', style: const TextStyle(color: Colors.black)),
           backgroundColor: Colors.white,
           iconTheme: const IconThemeData(color: Colors.black),
           elevation: 0,
         ),
-        body: BlocConsumer<TransactionCubit, TransactionState>(
+        body: BlocConsumer<DocumentTransactionCubit, DocumentTransactionState>(
           listener: (context, state) {
-            if (state is TransactionOperationSuccess) {
+            if (state is DocumentTransactionSaved) {
                Navigator.pop(context, true);
-            } else if (state is TransactionError) {
+            } else if (state is DocumentTransactionError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message, style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red),
               );
             }
           },
           builder: (context, state) {
-            final isLoading = state is TransactionLoading;
+            final isLoading = state is DocumentTransactionLoading;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -321,9 +321,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     if (_referenceController.text.isNotEmpty) data['reference'] = _referenceController.text;
 
     if (widget.transaction == null) {
-      _cubit.createTransaction(data);
+      _cubit.createDocumentTransaction(widget.documentId, data);
     } else {
-      _cubit.updateTransaction(widget.transaction!.id, data);
+      _cubit.updateDocumentTransaction(widget.documentId, widget.transaction!.id, data);
     }
   }
 }

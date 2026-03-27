@@ -29,7 +29,15 @@ class _MainLayoutState extends State<MainLayout> {
     const DocumentsListPage(),
   ];
 
-  static const _titles = ['Dashboard', 'Banking', 'Reports', 'Settings'];
+  static const _titles = [
+    'Dashboard',
+    'Items',
+    'Contacts',
+    'Banking',
+    'Reports',
+    'Settings',
+    'Documents'
+  ];
 
   @override
   Widget build(BuildContext context) {

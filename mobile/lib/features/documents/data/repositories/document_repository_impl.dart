@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../data/models/document_model.dart';
+import '../../../../data/models/transaction_model.dart';
 import '../../domain/repositories/document_repository.dart';
 
 class ApiDocumentRepository implements DocumentRepository {
@@ -51,7 +52,8 @@ class ApiDocumentRepository implements DocumentRepository {
   @override
   Future<DocumentModel> updateDocument(int id, Map<String, dynamic> data) async {
     try {
-      final response = await _dio.patch('/api/documents/$id', data: data);
+      final type = data['type'] ?? 'invoice';
+      final response = await _dio.patch('/api/documents/$id', data: data, queryParameters: {'type': type});
       final responseData = response.data as Map<String, dynamic>;
       return DocumentModel.fromJson(responseData['data']);
     } on DioException catch (e) {
@@ -62,7 +64,7 @@ class ApiDocumentRepository implements DocumentRepository {
   @override
   Future<void> deleteDocument(int id) async {
     try {
-      await _dio.delete('/api/documents/$id');
+      await _dio.delete('/api/documents/$id', queryParameters: {'type': 'invoice'});
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -71,9 +73,65 @@ class ApiDocumentRepository implements DocumentRepository {
   @override
   Future<DocumentModel> markAsReceived(int id) async {
     try {
-      final response = await _dio.get('/api/documents/$id/received');
+      final response = await _dio.get('/api/documents/$id/received', queryParameters: {'type': 'invoice'});
       final data = response.data as Map<String, dynamic>;
       return DocumentModel.fromJson(data['data']);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // --- Document Transactions ---
+
+  @override
+  Future<List<TransactionModel>> getDocumentTransactions(int documentId) async {
+    try {
+      final response = await _dio.get('/api/documents/$documentId/transactions', queryParameters: {'type': 'invoice', 'search': 'type:invoice'});
+      final data = response.data as Map<String, dynamic>;
+      final List items = data['data'] as List;
+      return items.map((json) => TransactionModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<TransactionModel> getDocumentTransaction(int documentId, int transactionId) async {
+    try {
+      final response = await _dio.get('/api/documents/$documentId/transactions/$transactionId', queryParameters: {'type': 'invoice'});
+      final data = response.data as Map<String, dynamic>;
+      return TransactionModel.fromJson(data['data']);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<TransactionModel> createDocumentTransaction(int documentId, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post('/api/documents/$documentId/transactions', data: data, queryParameters: {'type': 'invoice'});
+      final responseData = response.data as Map<String, dynamic>;
+      return TransactionModel.fromJson(responseData['data']);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<TransactionModel> updateDocumentTransaction(int documentId, int transactionId, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch('/api/documents/$documentId/transactions/$transactionId', data: data, queryParameters: {'type': 'invoice'});
+      final responseData = response.data as Map<String, dynamic>;
+      return TransactionModel.fromJson(responseData['data']);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<void> deleteDocumentTransaction(int documentId, int transactionId) async {
+    try {
+      await _dio.delete('/api/documents/$documentId/transactions/$transactionId', queryParameters: {'type': 'invoice'});
     } on DioException catch (e) {
       throw _handleError(e);
     }

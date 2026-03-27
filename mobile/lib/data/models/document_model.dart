@@ -10,6 +10,7 @@ class DocumentModel {
   final String? issueDate;
   final String? dueDate;
   final String? createdAt;
+  final String? currencyCode;
 
   const DocumentModel({
     required this.id,
@@ -23,6 +24,7 @@ class DocumentModel {
     this.issueDate,
     this.dueDate,
     this.createdAt,
+    this.currencyCode,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class DocumentModel {
       issueDate: json['issued_at'] as String?,
       dueDate: json['due_at'] as String?,
       createdAt: json['created_at'] as String?,
+      currencyCode: json['currency_code'] as String?,
     );
   }
 
@@ -74,6 +77,7 @@ class DocumentModel {
     String? issueDate,
     String? dueDate,
     String? createdAt,
+    String? currencyCode,
   }) {
     return DocumentModel(
       id: id ?? this.id,
@@ -87,6 +91,7 @@ class DocumentModel {
       issueDate: issueDate ?? this.issueDate,
       dueDate: dueDate ?? this.dueDate,
       createdAt: createdAt ?? this.createdAt,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 

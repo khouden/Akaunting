@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../data/models/document_model.dart';
 import '../../../../../logic/cubits/document_cubit.dart';
+import '../../../../../logic/cubits/document_transaction_cubit.dart';
 import 'document_form_page.dart';
+import 'document_transaction_form_page.dart';
 
 class DocumentDetailPage extends StatelessWidget {
   final DocumentModel document;
@@ -12,8 +14,13 @@ class DocumentDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<DocumentCubit>(
-      create: (context) => sl<DocumentCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<DocumentCubit>(create: (context) => sl<DocumentCubit>()),
+        BlocProvider<DocumentTransactionCubit>(
+          create: (context) => sl<DocumentTransactionCubit>()..loadDocumentTransactions(document.id),
+        ),
+      ],
       child: _DocumentDetailView(initialDocument: document),
     );
   }
@@ -120,6 +127,126 @@ class _DocumentDetailViewState extends State<_DocumentDetailView> {
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: Colors.blue),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DocumentTransactionFormPage(
+                              documentId: _currentDoc.id,
+                            ),
+                          ),
+                        ).then((res) {
+                          if (res == true) {
+                            context.read<DocumentTransactionCubit>().loadDocumentTransactions(_currentDoc.id);
+                            context.read<DocumentCubit>().loadDocument(_currentDoc.id);
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                BlocConsumer<DocumentTransactionCubit, DocumentTransactionState>(
+                  listener: (context, txState) {
+                    if (txState is DocumentTransactionDeleted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction deleted', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
+                      context.read<DocumentTransactionCubit>().loadDocumentTransactions(_currentDoc.id);
+                      context.read<DocumentCubit>().loadDocument(_currentDoc.id);
+                    }
+                  },
+                  builder: (context, txState) {
+                    if (txState is DocumentTransactionLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (txState is DocumentTransactionsLoaded) {
+                      if (txState.transactions.isEmpty) {
+                        return const Center(child: Text('No transactions found.'));
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: txState.transactions.length,
+                        itemBuilder: (context, index) {
+                          final tx = txState.transactions[index];
+                          return Dismissible(
+                            key: ValueKey(tx.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20.0),
+                              color: Colors.red,
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            confirmDismiss: (direction) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete Transaction'),
+                                  content: const Text('Are you sure you want to delete this transaction?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(false),
+                                      child: const Text('CANCEL'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      child: const Text('DELETE', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            onDismissed: (direction) {
+                              context.read<DocumentTransactionCubit>().deleteDocumentTransaction(_currentDoc.id, tx.id);
+                            },
+                            child: Card(
+                              elevation: 0,
+                              margin: const EdgeInsets.only(bottom: 8.0),
+                              child: ListTile(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => DocumentTransactionFormPage(
+                                        documentId: _currentDoc.id,
+                                        transaction: tx,
+                                      ),
+                                    ),
+                                  ).then((res) {
+                                    if (res == true) {
+                                      context.read<DocumentTransactionCubit>().loadDocumentTransactions(_currentDoc.id);
+                                      context.read<DocumentCubit>().loadDocument(_currentDoc.id);
+                                    }
+                                  });
+                                },
+                                leading: CircleAvatar(
+                                  backgroundColor: tx.type == 'income' ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                  child: Icon(
+                                    tx.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
+                                    color: tx.type == 'income' ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                                title: Text(tx.description ?? tx.type.toUpperCase()),
+                                subtitle: Text(tx.paidAt),
+                                trailing: Text(
+                                  tx.amountFormatted ?? tx.amount.toStringAsFixed(2),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else if (txState is DocumentTransactionError) {
+                      return Center(child: Text(txState.message, style: const TextStyle(color: Colors.red)));
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
                 const SizedBox(height: 24),
                 if (_currentDoc.status != 'received')

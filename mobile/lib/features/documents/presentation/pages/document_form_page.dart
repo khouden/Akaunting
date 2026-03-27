@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../data/models/document_model.dart';
 import '../../../../logic/cubits/document_cubit.dart';
 import '../../../../logic/cubits/contact_cubit.dart';
+import '../../../../features/currencies/presentation/cubit/currency_cubit.dart';
+import '../../../../features/currencies/presentation/cubit/currency_state.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/ui/components/base_alert.dart';
 import '../../../../core/ui/components/base_button.dart';
@@ -22,6 +24,9 @@ class DocumentFormPage extends StatelessWidget {
         ),
         BlocProvider<ContactCubit>(
           create: (context) => sl<ContactCubit>()..loadContacts(search: 'type:customer'),
+        ),
+        BlocProvider<CurrencyCubit>(
+          create: (context) => sl<CurrencyCubit>()..fetchCurrencies(query: {'enabled': 1}),
         ),
       ],
       child: _DocumentFormView(document: document),
@@ -48,11 +53,11 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
   DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
   
   int? _selectedContactId;
+  String? _selectedContactName;
   String _status = 'draft';
-  String _currencyCode = 'USD';
+  String? _currencyCode;
   
-  final List<String> _statuses = ['draft', 'sent', 'viewed', 'partial', 'paid', 'cancelled'];
-  final List<String> _currencies = ['USD', 'EUR', 'GBP', 'MAD'];
+  final List<String> _statuses = ['draft', 'sent', 'received', 'viewed', 'partial', 'paid', 'cancelled'];
 
   @override
   void initState() {
@@ -61,6 +66,8 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
     _amountController = TextEditingController(text: widget.document != null ? widget.document!.amount.toString() : '');
     _status = widget.document?.status ?? 'draft';
     _selectedContactId = widget.document?.contactId;
+    _selectedContactName = widget.document?.contactName;
+    _currencyCode = widget.document?.currencyCode;
     
     if (widget.document?.issueDate != null) {
       _issueDate = DateTime.tryParse(widget.document!.issueDate!) ?? DateTime.now();
@@ -83,6 +90,10 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a contact')));
         return;
       }
+      if (_currencyCode == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a currency')));
+        return;
+      }
       
       final amount = double.tryParse(_amountController.text) ?? 0.0;
       final data = {
@@ -91,6 +102,7 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
         'status': _status,
         'amount': amount,
         'contact_id': _selectedContactId,
+        'contact_name': _selectedContactName,
         'issued_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(_issueDate),
         'due_at': DateFormat('yyyy-MM-dd HH:mm:ss').format(_dueDate),
         'currency_code': _currencyCode,
@@ -99,6 +111,7 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
         'items': [
           {
             'name': 'Custom Service',
+            'description': '',
             'price': amount,
             'quantity': 1,
             'currency': _currencyCode,
@@ -192,6 +205,9 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
                       onChanged: (value) {
                         setState(() {
                           _selectedContactId = value;
+                          if (value != null) {
+                            _selectedContactName = contacts.firstWhere((c) => c.id == value).name;
+                          }
                         });
                       },
                       validator: (value) => value == null ? 'Please select a contact' : null,
@@ -233,21 +249,41 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
               ),
               const SizedBox(height: 16),
               
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Currency',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.money),
-                ),
-                value: _currencyCode,
-                items: _currencies.map((currency) {
-                  return DropdownMenuItem<String>(
-                    value: currency,
-                    child: Text(currency),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _currencyCode = value);
+              BlocBuilder<CurrencyCubit, CurrencyState>(
+                builder: (context, state) {
+                  if (state is CurrencyLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is CurrenciesLoaded) {
+                    final currencies = state.currencies;
+                    
+                    if (_currencyCode == null && currencies.isNotEmpty) {
+                       WidgetsBinding.instance.addPostFrameCallback((_) {
+                         setState(() {
+                           _currencyCode = widget.document?.currencyCode ?? currencies.first.code;
+                         });
+                       });
+                    }
+                    
+                    return DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Currency',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.money),
+                      ),
+                      value: currencies.any((c) => c.code == _currencyCode) ? _currencyCode : (currencies.isNotEmpty ? currencies.first.code : null),
+                      items: currencies.map((currency) {
+                        return DropdownMenuItem<String>(
+                          value: currency.code,
+                          child: Text('${currency.code} - ${currency.name}'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => _currencyCode = value);
+                      },
+                      validator: (value) => value == null ? 'Please select a currency' : null,
+                    );
+                  }
+                  return const Text('Error loading currencies');
                 },
               ),
               const SizedBox(height: 16),

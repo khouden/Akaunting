@@ -33,6 +33,22 @@ class AkauntingSelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sanitize options to prevent duplicate keys
+    final uniqueOptions = <AkauntingSelectOption>[];
+    final seenKeys = <String>{};
+    for (var opt in options) {
+      if (!seenKeys.contains(opt.key)) {
+        seenKeys.add(opt.key);
+        uniqueOptions.add(opt);
+      }
+    }
+
+    // Ensure value exists in options to prevent 'Either zero or 2 or more' assertion
+    String? safeValue = value;
+    if (safeValue != null && !seenKeys.contains(safeValue)) {
+      safeValue = null;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -58,7 +74,7 @@ class AkauntingSelect extends StatelessWidget {
             ),
           ),
         DropdownButtonFormField<String>(
-          value: value,
+          value: safeValue,
           onChanged: disabled ? null : onChanged,
           icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
           decoration: InputDecoration(
@@ -84,7 +100,7 @@ class AkauntingSelect extends StatelessWidget {
             ),
             errorText: error,
           ),
-          items: options.map((option) {
+          items: uniqueOptions.map((option) {
             return DropdownMenuItem<String>(
               value: option.key,
               child: Text(option.value, style: const TextStyle(fontSize: 14)),
@@ -95,3 +111,4 @@ class AkauntingSelect extends StatelessWidget {
     );
   }
 }
+
