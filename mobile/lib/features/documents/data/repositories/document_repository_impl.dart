@@ -30,7 +30,8 @@ class ApiDocumentRepository implements DocumentRepository {
   @override
   Future<DocumentModel> getDocument(int id) async {
     try {
-      final response = await _dio.get('/api/documents/$id');
+      // Must include type parameter for backend permission resolution
+      final response = await _dio.get('/api/documents/$id', queryParameters: {'type': 'invoice'});
       final data = response.data as Map<String, dynamic>;
       return DocumentModel.fromJson(data['data']);
     } on DioException catch (e) {
@@ -41,7 +42,9 @@ class ApiDocumentRepository implements DocumentRepository {
   @override
   Future<DocumentModel> createDocument(Map<String, dynamic> data) async {
     try {
-      final response = await _dio.post('/api/documents', data: data);
+      // Ensure type is set for permission resolution
+      final type = data['type'] ?? 'invoice';
+      final response = await _dio.post('/api/documents', data: data, queryParameters: {'type': type});
       final responseData = response.data as Map<String, dynamic>;
       return DocumentModel.fromJson(responseData['data']);
     } on DioException catch (e) {

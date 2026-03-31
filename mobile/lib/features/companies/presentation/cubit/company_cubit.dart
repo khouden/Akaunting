@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../logic/cubits/auth_cubit.dart';
 import '../../domain/repositories/company_repository.dart';
 import 'company_state.dart';
 
@@ -13,17 +15,40 @@ class CompanyCubit extends Cubit<CompanyState> {
     emit(CompanyLoading());
     try {
       final companies = await _repository.getCompanies();
-      final selectedId = companies.isNotEmpty ? companies.first.id : null;
+
+      // Get the currently selected company from auth
+      int? selectedId;
+      if (sl.isRegistered<AuthCubit>()) {
+        selectedId = await sl<AuthCubit>().getActiveCompanyId();
+      }
+
+      // If no company is selected or it's not in the list, use the first one
+      if (selectedId == null || !companies.any((c) => c.id == selectedId)) {
+        selectedId = companies.isNotEmpty ? companies.first.id : null;
+        // Persist the selection
+        if (selectedId != null && sl.isRegistered<AuthCubit>()) {
+          await sl<AuthCubit>().switchCompany(selectedId);
+        }
+      }
+
       emit(CompanyLoaded(companies: companies, selectedCompanyId: selectedId));
     } catch (e) {
       emit(CompanyError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 
-  void selectCompany(int companyId) {
+  /// Select a company and update the auth storage.
+  /// This ensures the X-Company header will be correct for subsequent API calls.
+  Future<void> selectCompany(int companyId) async {
     final currentState = state;
     if (currentState is CompanyLoaded) {
+      // Update state immediately for UI responsiveness
       emit(currentState.copyWith(selectedCompanyId: companyId));
+
+      // Persist the selection and refresh permissions
+      if (sl.isRegistered<AuthCubit>()) {
+        await sl<AuthCubit>().switchCompany(companyId);
+      }
     }
   }
 
