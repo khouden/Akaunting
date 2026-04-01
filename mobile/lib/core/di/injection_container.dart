@@ -49,6 +49,13 @@ import '../../features/users/domain/repositories/user_repository.dart';
 import '../../features/users/data/repositories/user_repository_impl.dart';
 import '../../features/users/presentation/cubit/user_cubit.dart';
 import '../../features/users/presentation/cubit/user_action_cubit.dart';
+import '../../features/document_scanner/domain/services/ocr_service.dart';
+import '../../features/document_scanner/data/services/ocr_service_impl.dart';
+import '../../features/document_scanner/domain/services/document_parser_service.dart';
+import '../../features/document_scanner/data/services/document_parser_service_impl.dart';
+import '../../features/document_scanner/domain/repositories/document_scanner_repository.dart';
+import '../../features/document_scanner/data/repositories/document_scanner_repository_impl.dart';
+import '../../features/document_scanner/presentation/cubit/document_scanner_cubit.dart';
 import '../network/api_client.dart';
 import '../network/auth_interceptor.dart';
 
@@ -141,6 +148,19 @@ Future<void> init() async {
 
   sl.registerFactory<DocumentTransactionCubit>(
     () => DocumentTransactionCubit(documentRepository: sl<DocumentRepository>()),
+  );
+
+  // Document Scanner
+  sl.registerLazySingleton<OcrService>(() => OcrServiceImpl());
+  sl.registerLazySingleton<DocumentParserService>(() => DocumentParserServiceImpl());
+  sl.registerLazySingleton<DocumentScannerRepository>(
+    () => DocumentScannerRepositoryImpl(
+      ocrService: sl<OcrService>(),
+      parserService: sl<DocumentParserService>(),
+    ),
+  );
+  sl.registerFactory<DocumentScannerCubit>(
+    () => DocumentScannerCubit(repository: sl<DocumentScannerRepository>()),
   );
 
   // Reconciliations

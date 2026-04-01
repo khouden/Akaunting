@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import '../../../../data/models/contact_model.dart';
 import '../../../../data/models/document_model.dart';
 import '../../../../logic/cubits/document_cubit.dart';
 import '../../../../logic/cubits/contact_cubit.dart';
 import '../../../../features/currencies/presentation/cubit/currency_cubit.dart';
 import '../../../../features/currencies/presentation/cubit/currency_state.dart';
+import '../../../../features/document_scanner/domain/entities/scanned_document_data.dart';
+import '../../../../features/document_scanner/presentation/cubit/document_scanner_cubit.dart';
+import '../../../../features/document_scanner/presentation/cubit/document_scanner_state.dart';
+import '../../../../features/document_scanner/presentation/pages/scan_preview_page.dart';
+import '../../../../features/document_scanner/presentation/widgets/scan_document_button.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/ui/components/base_alert.dart';
 import '../../../../core/ui/components/base_button.dart';
@@ -27,6 +33,9 @@ class DocumentFormPage extends StatelessWidget {
         ),
         BlocProvider<CurrencyCubit>(
           create: (context) => sl<CurrencyCubit>()..fetchCurrencies(query: {'enabled': 1}),
+        ),
+        BlocProvider<DocumentScannerCubit>(
+          create: (context) => sl<DocumentScannerCubit>(),
         ),
       ],
       child: _DocumentFormView(document: document),
@@ -56,6 +65,8 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
   String? _selectedContactName;
   String _status = 'draft';
   String? _currencyCode;
+  String? _scanAlert;
+  List<ContactModel> _contacts = [];
   
   final List<String> _statuses = ['draft', 'sent', 'received', 'viewed', 'partial', 'paid', 'cancelled'];
 
@@ -148,6 +159,118 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
     }
   }
 
+  Future<void> _startDocumentScan() async {
+    final scannerCubit = context.read<DocumentScannerCubit>();
+    await scannerCubit.scanDocument();
+
+    if (!mounted) return;
+
+    final state = scannerCubit.state;
+    if (state is DocumentScannerFailure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.message)),
+      );
+      return;
+    }
+
+    if (state is! DocumentScannerSuccess) {
+      return;
+    }
+
+    final reviewed = await Navigator.of(context).push<ScannedDocumentData>(
+      MaterialPageRoute(
+        builder: (_) => ScanPreviewPage(
+          scannedData: state.data,
+          imagePaths: state.imagePaths,
+        ),
+      ),
+    );
+
+    if (!mounted || reviewed == null) return;
+
+    _applyScannedData(reviewed);
+    scannerCubit.reset();
+  }
+
+  void _applyScannedData(ScannedDocumentData data) {
+    final scanMessages = <String>[];
+
+    setState(() {
+      if ((data.documentNumber ?? '').trim().isNotEmpty) {
+        _numberController.text = data.documentNumber!.trim();
+      }
+
+      if (data.amount != null) {
+        _amountController.text = data.amount!.toStringAsFixed(2);
+      }
+
+      if (data.issueDate != null) {
+        _issueDate = data.issueDate!;
+      }
+
+      if (data.dueDate != null) {
+        _dueDate = data.dueDate!;
+      }
+
+      if (_dueDate.isBefore(_issueDate)) {
+        _dueDate = _issueDate.add(const Duration(days: 1));
+      }
+
+      if ((data.currencyCode ?? '').isNotEmpty) {
+        _currencyCode = data.currencyCode!.toUpperCase();
+      }
+
+      if ((data.status ?? '').isNotEmpty) {
+        final normalizedStatus = data.status!.toLowerCase();
+        if (_statuses.contains(normalizedStatus)) {
+          _status = normalizedStatus;
+        } else {
+          scanMessages.add('Detected status "${data.status}" is not supported in this form.');
+        }
+      }
+
+      if ((data.contactName ?? '').isNotEmpty) {
+        final resolvedContact = _resolveContactByName(data.contactName!);
+        if (resolvedContact != null) {
+          _selectedContactId = resolvedContact.id;
+          _selectedContactName = resolvedContact.name;
+        } else {
+          scanMessages.add('Contact "${data.contactName}" was not found. Please select it manually.');
+        }
+      }
+
+      if (data.warnings.isNotEmpty) {
+        scanMessages.addAll(data.warnings);
+      }
+
+      _scanAlert = scanMessages.isEmpty ? 'Scanned values applied. Please review before saving.' : scanMessages.join('\n');
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Scan processed. Review extracted values.')),
+    );
+  }
+
+  ContactModel? _resolveContactByName(String name) {
+    final normalized = name.trim().toLowerCase();
+    if (normalized.isEmpty || _contacts.isEmpty) return null;
+
+    for (final contact in _contacts) {
+      if (contact.name.trim().toLowerCase() == normalized) {
+        return contact;
+      }
+    }
+
+    for (final contact in _contacts) {
+      final candidate = contact.name.trim().toLowerCase();
+      if (candidate.contains(normalized) || normalized.contains(candidate)) {
+        return contact;
+      }
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,6 +295,23 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              BlocBuilder<DocumentScannerCubit, DocumentScannerState>(
+                builder: (context, scannerState) {
+                  return ScanDocumentButton(
+                    onPressed: _startDocumentScan,
+                    state: scannerState,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              if (_scanAlert != null)
+                BaseAlert(
+                  type: AlertType.info,
+                  icon: Icons.info_outline,
+                  content: Text(_scanAlert!),
+                ),
+
               TextFormField(
                 controller: _numberController,
                 decoration: const InputDecoration(
@@ -189,6 +329,7 @@ class _DocumentFormViewState extends State<_DocumentFormView> {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is ContactsLoaded) {
                     final contacts = state.contacts;
+                    _contacts = contacts;
                     return DropdownButtonFormField<int>(
                       decoration: const InputDecoration(
                         labelText: 'Contact (Customer)',
